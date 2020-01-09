@@ -1,6 +1,6 @@
 
 
-*reading in aggdata;
+							/*READING IN GAME BY GAME AGGREGATE DATA*/
 
 %macro aggdata(sheet=,name=);
 
@@ -21,7 +21,7 @@ run;
 %aggdata(sheet='Agg 2018-19',name=agg18);
 
 
-*creating year variables in aggdata;
+						/*CREATING YEAR VARIABLES FOR EACH SEASON*/
 data agg13;
 	set agg13;
 	year=2013;
@@ -53,6 +53,9 @@ data agg18;
 run;
 
 
+
+
+						/***COMBINING ALL SEASONS OF AGGREGATE DATA***/
 data totalgamedata;
 	set agg13 agg14 agg15 agg16 agg17 agg18;
 run;
@@ -61,20 +64,7 @@ run;
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+							/***READING IN SEASON AVERAGE DATA***/
 %macro aggdata(sheet=,name=);
 
 proc import datafile='/folders/myshortcuts/Documents/UNCW/BallHogTheory/season_avg with def.xlsx'
@@ -95,6 +85,7 @@ run;
 
 
 
+						/***REMOVING NULL DATA FROM EACH SEASON***/
 %macro teamdata(season=,file=);
 
 proc sql outobs=30;
@@ -115,11 +106,16 @@ quit;
 
 
 
+
+								/***COMBINING SEASON AVERAGES***/
 data totaldata;
 	set season13 season14 season15 season16 season17 season18;
 run;
 
 
+
+
+						/***CLUSTERING TEAMS BASED ON STYLE OF PLAY***/
 proc fastclus data=totaldata out=totalclust maxclusters=3 maxiter=100;
 	var  time_of_possession avg_drib_per_touch touches paint_touches front_ct_touches elbow_touches post_touches avg_sec_per_touch;
 run;
@@ -130,12 +126,16 @@ proc candisc data=totalclust out=Can noprint;
    var   time_of_possession avg_drib_per_touch touches paint_touches front_ct_touches elbow_touches post_touches avg_sec_per_touch;
 run;
 
+
+
+					/***PLOTTING THE RESULTS OF THE CLUSTER ANALYSIS***/
 proc sgplot data=Can;
    scatter y=Can2 x=Can1 / group=Cluster markerattrs=(symbol=CircleFilled);
 run;
 
 
 
+					/***MERGING CLUSTERS WITH GAME BY GAME DATA***/
 proc sql;
 create table gamebygameclust as
 select totalclust.cluster, totalgamedata.* 
@@ -144,7 +144,7 @@ where totalclust.team = totalgamedata.team and totalclust.year = totalgamedata.y
 ;
 quit;
 
-
+				/***CATEGORICAL ANALYSIS OF WINNING BASED ON CLUSTER***/
 ods graphics off;
 proc glm data=gamebygameclust; 
   class cluster;
@@ -153,7 +153,7 @@ proc glm data=gamebygameclust;
   format cluster cluster.;
 run;
 
-	
+					/***CLUSTER FORMATTING***/
 proc format;
 	value cluster
 	 1='Pass Heavy'
@@ -166,11 +166,11 @@ run;
 
 
 
-
+			/***CLUSTERING TEAMS EACH SEASONS BASED ON STYLE OF PLAY VARIABLES***/
 
 %macro cluster(season= , clust=  ) ;
 
-proc fastclus data= &season out=&clust maxclusters=4 maxiter=100;
+proc fastclus data= &season out=&clust maxclusters=3 maxiter=100;
 	var time_of_possession avg_drib_per_touch touches paint_touches front_ct_touches elbow_touches post_touches avg_sec_per_touch;
 run;
 

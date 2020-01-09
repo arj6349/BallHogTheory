@@ -150,10 +150,17 @@ proc glm data=gamebygameclust;
   class cluster;
   model winloss = cluster / solution noint; 
   lsmeans cluster / diff adjust=tukey;
+  format cluster cluster.;
 run;
 
 	
-
+proc format;
+	value cluster
+	 1='Pass Heavy'
+	 2='Isolation Heavy'
+	 3='Mixed'
+	 ;
+run;
 
 
 
